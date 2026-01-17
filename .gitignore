@@ -1,0 +1,5 @@
+/target
+/output
+*.json
+!config.example.json
+Cargo.lock
