@@ -8,12 +8,13 @@ A high-performance, parallel AWS resource collector built in Rust. Efficiently c
 
 ## ✨ Features
 
-- 🚀 **Parallel Collection**: Concurrent resource gathering with configurable concurrency limits
+- 🚀 **Parallel Collection**: Concurrent resource gathering with configurable concurrency limits (default: 5)
 - 🌍 **Multi-Region Support**: Collect resources from multiple AWS regions simultaneously
 - 📦 **21 AWS Services**: Comprehensive coverage of major AWS services
 - ⚡ **High Performance**: Built with Rust for speed and reliability
 - 🎯 **Selective Collection**: Choose specific services for additional regions
 - 📊 **Structured Output**: Clean JSON output organized by service and region
+- 🎨 **Real-time Progress**: Beautiful progress bars with live status updates
 
 ## 🔧 Supported AWS Services
 
@@ -115,7 +116,7 @@ cloud_collector aws collect \
 ### Concurrency Control
 
 ```bash
-# Adjust concurrent collectors (default: 10)
+# Adjust concurrent collectors (default: 5)
 cloud_collector aws collect --concurrency 20
 ```
 
@@ -134,6 +135,25 @@ cloud_collector aws collect \
   --concurrency 15 \
   --create-new-file
 ```
+
+## 📊 Real-time Progress Display
+
+The collector provides beautiful real-time progress tracking:
+
+```
+📊 Collection Summary: 59/59 tasks completed in 45.5s
+  ec2 (ap-southeast-1)      │ ✅ 4.7s
+  ec2 (us-west-2)           │ ✅ 4.8s
+  s3 (ap-southeast-1)       │ ✅ 6.3s
+⠋ lambda (us-west-2)        │ 🔄 collecting...
+  rds (ap-southeast-1)      │ ✅ 2.6s
+```
+
+**Progress Indicators:**
+- 🔄 Running - Service is actively collecting
+- ⏳ Pending - Waiting to start
+- ✅ Completed - Shows duration in seconds
+- ❌ Error - Collection failed
 
 ## 📁 Output Structure
 

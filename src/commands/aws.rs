@@ -132,23 +132,26 @@ pub async fn collect_resources(
     let processed_global_services = Arc::new(Mutex::new(HashSet::new()));
     let semaphore = Arc::new(Semaphore::new(concurrency));
 
-    // Track service status: (service_name, status, duration)
-    // Status: 0 = pending, 1 = running, 2 = completed, 3 = error
-    let service_status = Arc::new(Mutex::new(
-        enabled_services
-            .iter()
-            .map(|s| (s.clone(), 0, 0.0))
-            .collect::<Vec<_>>(),
-    ));
+    // Create MultiProgress for tracking all tasks
+    let multi = Arc::new(ui::create_multi_progress());
 
-    // Print initial table header
-    println!("📊 Collection Summary:");
+    // Track task counts for summary
+    let total_tasks = Arc::new(Mutex::new(0usize));
+    let completed_tasks = Arc::new(Mutex::new(0usize));
 
     // Track start time for elapsed display
     let collection_start = std::time::Instant::now();
 
-    // Spawn a task to update the display
-    let display_task = ui::spawn_status_display_task(Arc::clone(&service_status), collection_start);
+    // Create summary progress bar FIRST so it appears at the top
+    let summary_pb = ui::create_summary_progress_bar(&multi);
+
+    // Spawn summary task
+    let summary_task = ui::spawn_summary_task(
+        summary_pb,
+        collection_start,
+        Arc::clone(&total_tasks),
+        Arc::clone(&completed_tasks),
+    );
 
     let mut tasks = Vec::new();
 
@@ -197,24 +200,28 @@ pub async fn collect_resources(
                 processed.insert(service_name.clone());
             }
 
+            // Increment total tasks
+            {
+                let mut total = total_tasks.lock().await;
+                *total += 1;
+            }
+
+            // Create progress bar for this task
+            let pb = ui::create_service_progress_bar(&multi, &service_name, &region);
+
             let cli = cli.clone();
             let region = region.clone();
             let all_collections = Arc::clone(&all_collections);
             let semaphore = Arc::clone(&semaphore);
-            let service_status = Arc::clone(&service_status);
             let service_name = service_name.clone();
+            let completed_tasks = Arc::clone(&completed_tasks);
 
             let task = tokio::spawn(async move {
                 // Acquire semaphore permit
                 let _permit = semaphore.acquire().await.unwrap();
 
-                // Update status to running
-                {
-                    let mut status = service_status.lock().await;
-                    if let Some(entry) = status.iter_mut().find(|(s, _, _)| s == &service_name) {
-                        entry.1 = 1; // running
-                    }
-                }
+                // Update to running state
+                ui::set_progress_running(&pb);
 
                 let start_time = std::time::Instant::now();
                 let collector = aws::collectors::get_collector(service_type);
@@ -236,13 +243,17 @@ pub async fn collect_resources(
 
                 let elapsed = start_time.elapsed().as_secs_f64();
 
-                // Update status to completed or error
+                // Update progress bar based on result
+                if success {
+                    ui::set_progress_completed(&pb, elapsed);
+                } else {
+                    ui::set_progress_error(&pb);
+                }
+
+                // Increment completed tasks
                 {
-                    let mut status = service_status.lock().await;
-                    if let Some(entry) = status.iter_mut().find(|(s, _, _)| s == &service_name) {
-                        entry.1 = if success { 2 } else { 3 }; // completed or error
-                        entry.2 = elapsed;
-                    }
+                    let mut completed = completed_tasks.lock().await;
+                    *completed += 1;
                 }
             });
 
@@ -255,8 +266,8 @@ pub async fn collect_resources(
         let _ = task.await;
     }
 
-    // Wait for display task to finish
-    let _ = display_task.await;
+    // Wait for summary task to finish
+    let _ = summary_task.await;
 
     println!("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     println!("✅ All collectors completed!");
