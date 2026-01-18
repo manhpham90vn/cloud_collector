@@ -1,323 +1,251 @@
-# AWS Collector - AWS Resource Lister
+# Cloud Collector
 
-Tool để list toàn bộ AWS resources và xuất ra file JSON với thông tin chi tiết.
+[![CI](https://github.com/manhpham90vn/aws_collector/workflows/CI/badge.svg)](https://github.com/manhpham90vn/aws_collector/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org)
 
-## Tính năng
+A high-performance, parallel AWS resource collector built in Rust. Efficiently collect and export AWS resources across multiple regions and services with intelligent concurrency control.
 
-- ✅ List resources từ **22 AWS services**
-- ✅ Hỗ trợ **multi-region** (chỉ định nhiều regions)
-- ✅ **Concurrent collection** (chạy đồng thời nhiều collectors) 🆕
-- ✅ Thu thập **thông tin chi tiết** cho mỗi resource (metadata, configs, policies, tags)
-- ✅ Tự động collect TẤT CẢ resource types của mỗi service
-- ✅ Output dạng JSON organized theo service
-- ✅ Sử dụng AWS CLI trực tiếp
-- ✅ CLI đơn giản với AWS profile selection
+## ✨ Features
 
-## AWS Services được hỗ trợ (22)
+- 🚀 **Parallel Collection**: Concurrent resource gathering with configurable concurrency limits
+- 🌍 **Multi-Region Support**: Collect resources from multiple AWS regions simultaneously
+- 📦 **21 AWS Services**: Comprehensive coverage of major AWS services
+- ⚡ **High Performance**: Built with Rust for speed and reliability
+- 🎯 **Selective Collection**: Choose specific services for additional regions
+- 📊 **Structured Output**: Clean JSON output organized by service and region
 
-### **Compute & Containers**
-- **EC2**: 22 resource types (instances, VPCs, subnets, security groups, Auto Scaling Groups, Launch Templates, VPC Peering, Transit Gateway, VPN, etc.)
-- **Lambda**: Functions (với configs, event sources, aliases, versions, tags), layers, code signing configs
-- **ECS**: Clusters (với capacity providers), services, task definitions, tasks, container instances
+## 🔧 Supported AWS Services
 
-### **Storage**
-- **S3**: Buckets (với 18 loại metadata: encryption, lifecycle, replication, notifications, inventory, analytics, etc.)
-- **EBS**: Volumes, snapshots (part of EC2)
+### 🔧 Compute & Containers
+- **EC2** - Instances, Security Groups, Key Pairs, Volumes, Snapshots, AMIs, Network Interfaces
+- **ECS** - Clusters, Services, Tasks, Task Definitions, Container Instances
+- **Lambda** - Functions, Layers, Event Source Mappings
 
-### **Database**
-- **RDS**: DB instances, clusters, snapshots, cluster snapshots, subnet groups, parameter groups, option groups, proxies, event subscriptions, reserved instances
+### 💾 Storage & Database
+- **S3** - Buckets with versioning, encryption, lifecycle, and replication details
+- **RDS** - DB Instances, Clusters, Snapshots, Parameter Groups, Subnet Groups
+- **ElastiCache** - Redis and Memcached clusters, parameter groups, subnet groups
 
-### **Networking & Content Delivery**
-- **VPC**: VPCs, subnets, route tables, internet gateways, NAT gateways, network ACLs, VPC endpoints, peering connections, VPN gateways, customer gateways
-- **ELB**: Classic LBs, ALB/NLB (với attributes, tags), target groups (với health status), listeners (với rules)
-- **Route53**: Hosted zones (với record sets, tags), health checks, traffic policies, resolver rules, resolver endpoints
-- **CloudFront**: Distributions (với configs, tags), origin access identities, cache policies, origin request policies, response headers policies, functions
+### 🌐 Networking
+- **VPC** - VPCs, Subnets, Route Tables, Internet Gateways, NAT Gateways, VPC Endpoints
+- **ELB** - Application, Network, and Classic Load Balancers with target groups
+- **Route53** - Hosted Zones and Record Sets
+- **CloudFront** - Distributions
 
-### **Security & Identity**
-- **IAM**: Users (với attached/inline policies, access keys, MFA, groups), roles (với policies, instance profiles), groups (với policies), SAML/OIDC providers, account password policy
-- **ACM**: Certificates (với tags)
-- **WAF**: Web ACLs (Regional & CloudFront), IP sets, regex pattern sets, rule groups
-- **Secrets Manager**: Secrets (metadata only)
+### 🔐 Security & Identity
+- **IAM** - Users, Groups, Roles, Policies (Global service)
+- **ACM** - SSL/TLS Certificates
+- **WAF** - Web ACLs, Rules, IP Sets
+- **Secrets Manager** - Secrets with rotation configuration
 
-### **Management & Governance**
-- **CloudFormation**: Stacks, stack sets, exports, change sets
-- **CloudWatch**: Alarms, log groups (với metric filters, subscription filters), dashboards, metric streams, insights rules
+### 📊 Management & Monitoring
+- **CloudFormation** - Stacks and Stack Resources
+- **CloudWatch** - Alarms, Log Groups, Metrics
+- **EventBridge** - Event Buses and Rules
 
-### **Application Integration**
-- **EventBridge**: Event buses (với rules, targets), archives, API destinations, connections, replays
-- **SNS**: Topics (với attributes, subscriptions, tags), platform applications
-- **SQS**: Queues (với all attributes, tags)
-- **SES**: Identities, configuration sets, receipt rule sets, templates, custom verification templates
+### 📬 Application Integration
+- **SNS** - Topics and Subscriptions
+- **SQS** - Queues
+- **SES** - Identities and Configuration Sets
 
-### **Containers & Registry**
-- **ECR**: Repositories (với images, lifecycle policies, repository policies, tags)
-- **ElastiCache**: Cache clusters, replication groups, subnet groups, parameter groups, security groups, snapshots, user groups
+### 🐳 Developer Tools
+- **ECR** - Repositories and Images
 
-## Yêu cầu
+## 📋 Requirements
 
-- Rust 1.70+ (hoặc mới hơn)
-- AWS CLI v2
-- AWS credentials đã được cấu hình (`aws configure`)
+- **Rust** 1.70 or higher
+- **AWS CLI** installed and configured
+- **AWS Credentials** with appropriate read permissions
 
-## Cài đặt
+## 🚀 Installation
+
+### From Source
 
 ```bash
-# Clone repo
-git clone <repo-url>
+# Clone the repository
+git clone https://github.com/manhpham90vn/aws_collector.git
 cd aws_collector
 
-# Build
+# Build release binary
 cargo build --release
+
+# Binary will be at ./target/release/cloud_collector
 ```
 
-## Sử dụng
+### From GitHub Releases
 
-### **Cơ bản**
+Download pre-built binaries from the [Releases](https://github.com/manhpham90vn/aws_collector/releases) page.
+
+## 📖 Usage
+
+### List Available Services
 
 ```bash
-# Sử dụng profile mặc định (default) và default region từ profile
-cargo run --release -- collect
-
-# Sử dụng profile khác
-cargo run --release -- collect --profile production
-cargo run --release -- collect -p staging
+cloud_collector aws list-services
 ```
 
-### **Multi-Region** 🆕
+This displays all 21 supported AWS services grouped by category.
+
+### Basic Collection
 
 ```bash
-# Thu thập từ default region (từ profile) + thêm regions khác
-cargo run --release -- collect --regions "eu-west-1,ap-southeast-1"
-# Ví dụ: Nếu profile default region là us-east-1, sẽ thu thập: us-east-1, eu-west-1, ap-southeast-1
+# Collect from default profile and region
+cloud_collector aws collect
 
-# Kết hợp với profile
-cargo run --release -- collect --profile production --regions "us-west-2,eu-west-1"
-# Ví dụ: Nếu production profile default region là us-east-1, sẽ thu thập: us-east-1, us-west-2, eu-west-1
+# Specify AWS profile
+cloud_collector aws collect --profile production
+
+# Create timestamped output file
+cloud_collector aws collect --create-new-file
 ```
 
-### **Timestamp Files** 🆕
+### Multi-Region Collection
 
 ```bash
-# Tạo file mới với timestamp thay vì overwrite file cũ
-cargo run --release -- collect --create-new-file
+# Collect from additional regions (all services)
+cloud_collector aws collect --regions us-west-2,eu-west-1
 
-# Kết hợp với profile và regions
-cargo run --release -- collect --profile production --regions "us-east-1" --create-new-file
+# Collect specific services from additional regions
+cloud_collector aws collect \
+  --regions us-west-2,eu-west-1 \
+  --region-services acm,cloudfront,lambda
 ```
 
-### **Concurrent Collection** 🆕
+### Concurrency Control
 
 ```bash
-# Chạy đồng thời tối đa 5 collectors (default)
-cargo run --release -- collect
+# Adjust concurrent collectors (default: 10)
+cloud_collector aws collect --concurrency 20
+```
 
-# Tùy chỉnh số collectors chạy đồng thời (1-10)
-cargo run --release -- collect --concurrency 10
-cargo run --release -- collect -j 3
+### Complete Example
 
-# Kết hợp với các options khác
-cargo run --release -- collect \
+```bash
+# Collect from production profile
+# Additional regions: us-west-2, eu-west-1
+# Only collect ACM and CloudFront from additional regions
+# Use 15 concurrent collectors
+# Create new timestamped file
+cloud_collector aws collect \
   --profile production \
-  --regions "us-east-1,us-west-2" \
-  --concurrency 8 \
+  --regions us-west-2,eu-west-1 \
+  --region-services acm,cloudfront \
+  --concurrency 15 \
   --create-new-file
 ```
 
-> **Lưu ý**: 
-> - **Default region** từ profile **luôn được thu thập**
-> - `--regions` **thêm** các regions bổ sung, không thay thế default region
-> - Ví dụ: Profile default là `us-east-1`, chạy `--regions "eu-west-1"` sẽ thu thập cả `us-east-1` và `eu-west-1`
-> - Global services (S3, IAM, CloudFront, Route53) chỉ thu thập **một lần** dù có bao nhiêu regions
-> - Nếu **không** chỉ định `--create-new-file`: File cũ sẽ bị overwrite
-> - Nếu **có** chỉ định `--create-new-file`: Tạo file mới với timestamp (format: `YYYYMMDD_HHMMSS`)
-> - **Concurrency**: Giới hạn từ 1-10, default là 5. Tăng concurrency sẽ nhanh hơn nhưng tốn nhiều tài nguyên
+## 📁 Output Structure
 
-## Architecture
-
-### **Parallel Execution** 🆕
-
-Tool sử dụng **3-level parallel execution** để tối ưu performance:
-
-```
-Level 1: Services (Concurrent)
-├── S3 Collector ─────────┐
-├── Lambda Collector ─────┤
-├── ECR Collector ────────┤  ← Chạy song song (max 5-10 concurrent)
-├── RDS Collector ────────┤
-└── ... ──────────────────┘
-
-Level 2: Resources (Concurrent per service)
-└── S3 Collector
-    ├── Bucket 1 ─────────┐
-    ├── Bucket 2 ─────────┤
-    ├── Bucket 3 ─────────┤  ← Chạy song song (max 5-10 concurrent)
-    └── ... ──────────────┘
-
-Level 3: Details (Concurrent per resource) 🆕
-└── Bucket 1
-    ├── Get Location ─────┐
-    ├── Get Versioning ───┤
-    ├── Get Encryption ───┤
-    ├── Get Lifecycle ────┤  ← Chạy song song (max 10 concurrent)
-    ├── Get Tags ─────────┤
-    └── ... ──────────────┘
-```
-
-**Performance Impact:**
-- **Before**: Detail commands chạy tuần tự → ~3.6s per bucket (18 commands × 200ms)
-- **After**: Detail commands chạy song song → ~400ms per bucket (2 batches × 200ms)
-- **Speedup**: ~9x faster! 🚀
-
-**Collectors sử dụng parallel execution:**
-- S3 (18 detail commands)
-- Lambda (7 detail commands)
-- ECR (4 detail commands)
-- CloudWatch (2 detail commands)
-- SNS (3 detail commands)
-- ACM (certificate details + tags)
-- ELB (2 detail commands for LBs and TGs)
-- Route53 (record sets + tags)
-
-
-
-## Performance
-
-### **Comparison Table**
-
-| Concurrency | Thời gian (ước tính) | CPU Usage | Khuyến nghị |
-|-------------|---------------------|-----------|-------------|
-| 1 (tuần tự) | ~10-15 phút        | Thấp      | Máy yếu, ít services |
-| 3           | ~5-7 phút          | Trung bình | Cân bằng |
-| 5 (default) | ~3-5 phút          | Trung bình | **Khuyến nghị** |
-| 8           | ~2-3 phút          | Cao       | Máy mạnh, nhiều services |
-| 10 (max)    | ~2-3 phút          | Rất cao   | Máy rất mạnh |
-
-### **Performance Tips**
-
-1. **Tăng concurrency** nếu:
-   - Máy có CPU/RAM đủ mạnh
-   - Cần thu thập nhanh
-   - Thu thập nhiều services
-
-2. **Giảm concurrency** nếu:
-   - Máy yếu hoặc đang chạy nhiều process khác
-   - Gặp rate limiting từ AWS
-   - Chỉ thu thập vài services
-
-3. **Optimize regions**:
-   - Chỉ chỉ định regions thực sự cần thiết
-   - Global services (S3, IAM) chỉ chạy 1 lần
-
-4. **Best practice**:
-   ```bash
-   # Fast collection cho production
-   cargo run --release -- collect -p production -r us-east-1 -j 8
-   
-   # Safe collection cho nhiều regions
-   cargo run --release -- collect -p production -r "us-east-1,eu-west-1" -j 5
-   ```
-
-### **Sau khi build**
-
-```bash
-./target/release/aws_collector collect
-./target/release/aws_collector collect --profile production
-./target/release/aws_collector collect --regions "us-east-1,eu-west-1"
-```
-
-## Output
-
-### **Cấu Trúc Thư Mục** 🆕
-
-Files được tổ chức theo profile để dễ quản lý:
-
-```
-output/
-├── default/                    # Profile: default
-│   ├── ec2_ap-southeast-1_all.json
-│   ├── s3_global_all.json
-│   ├── lambda_ap-southeast-1_all.json
-│   └── ...
-├── production/                 # Profile: production
-│   ├── ec2_us-east-1_all.json
-│   ├── rds_us-east-1_all.json
-│   └── ...
-└── staging/                    # Profile: staging
-    ├── ec2_eu-west-1_all.json
-    └── ...
-```
-
-### **Với Timestamp** (khi dùng `--create-new-file`)
+Resources are saved to `./output/{profile}/` directory:
 
 ```
 output/
 └── default/
-    ├── ec2_ap-southeast-1_all_20260118_010000.json
-    ├── ec2_ap-southeast-1_all_20260118_020000.json
-    ├── s3_global_all_20260118_010000.json
-    └── ...
+    ├── ec2_us-east-1_all.json
+    ├── s3_global_all.json
+    ├── rds_us-east-1_all.json
+    └── lambda_us-east-1_all.json
 ```
 
-Format của mỗi file:
-
+Each file contains:
 ```json
 {
-  "service": "lambda",
-  "region": "ap-southeast-1",
-  "resource_type": "functions",
+  "service": "ec2",
+  "region": "us-east-1",
   "resources": {
-    "Functions": [
-      {
-        "FunctionName": "my-function",
-        "Configuration": { ... },
-        "EventSourceMappings": { ... },
-        "Aliases": { ... },
-        "Tags": { ... }
-      }
-    ]
+    "Instances": [...],
+    "SecurityGroups": [...],
+    "Volumes": [...]
   },
-  "collected_at": "2026-01-18T00:30:00Z"
+  "collected_at": "2026-01-18T04:12:01+00:00"
 }
 ```
 
-## Thêm service mới
+## 🏗️ Architecture
 
-Để thêm collector cho service mới:
+### Parallel Execution Framework
 
-1. Tạo file `src/collectors/<service>.rs` và implement `ResourceCollector` trait
-2. Thêm module declaration trong `src/collectors/mod.rs`
-3. Thêm variant mới vào `ServiceType` enum
-4. Implement các method: `from_str()`, `as_str()`, `all()`, `is_global()`
-5. Update `get_collector()` function với service mới
+The project uses a sophisticated parallel execution framework:
 
-Xem các collector hiện có (ví dụ: `sns.rs`, `sqs.rs`, `ses.rs`) để tham khảo.
+- **Generic Utilities** (`src/utils/parallel.rs`): Reusable async parallel patterns
+- **AWS Adapters** (`src/aws/parallel_aws.rs`): AWS-specific parallel implementations
+- **Collector Builder** (`src/aws/collector_builder.rs`): Declarative collector construction
 
-## Troubleshooting
+### Collector Pattern
 
-### AWS CLI not found
+Collectors use three collection modes:
+
+1. **SimpleList**: Direct API call → JSON output
+2. **BatchCommands**: Multiple parallel API calls
+3. **ListWithDetails**: List resources → Fetch details in parallel
+
+Example:
+```rust
+CollectorBuilder::new("lambda", RegionMode::Regional)
+    .add_detailed_resource(
+        "Functions",
+        vec!["lambda", "list-functions"],
+        "Functions",
+        "FunctionName",
+        10, // concurrency
+        vec![
+            DetailTemplate::new("Configuration", "lambda", "get-function", "--function-name"),
+            DetailTemplate::new("Policy", "lambda", "get-policy", "--function-name"),
+        ],
+    )
+    .collect_with_region(cli, region)
+    .await
 ```
-Error: AWS CLI not found. Please install AWS CLI first.
-```
-→ Cài đặt AWS CLI: https://aws.amazon.com/cli/
 
-### Credentials error
-```
-Error: AWS CLI command failed: Unable to locate credentials
-```
-→ Chạy `aws configure` để setup credentials
+## 🛠️ Development
 
-### Permission denied
-```
-Error: AWS CLI command failed: An error occurred (AccessDenied)
-```
-→ Kiểm tra IAM permissions của user/role
+### Build
 
-### Region not found
+```bash
+cargo build
 ```
-Error: Failed to get default region
+
+### Run Tests
+
+```bash
+cargo test
 ```
-→ Set region cho profile: `aws configure set region ap-southeast-1 --profile your-profile`
 
-## License
+### Linting
 
-MIT
+```bash
+cargo clippy --all-targets --all-features
+```
+
+### Format
+
+```bash
+cargo fmt --all
+```
+
+## 🗺️ Roadmap
+
+- [x] AWS support with 21 services
+- [x] Parallel collection with concurrency control
+- [x] Multi-region support
+- [x] Selective service collection
+- [x] CI/CD with GitHub Actions
+- [ ] Google Cloud Platform support
+- [ ] Azure support
+- [ ] Unified multi-cloud output format
+- [ ] Resource change detection
+- [ ] Export to multiple formats (CSV, Parquet)
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📧 Contact
+
+For questions or feedback, please open an issue on GitHub.
+
