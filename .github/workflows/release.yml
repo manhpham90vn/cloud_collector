@@ -77,8 +77,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          target/${{ matrix.asset_name }}.tar.gz
-          target/${{ matrix.asset_name }}.zip
+          ${{ matrix.os == 'windows-latest' && format('target/{0}.zip', matrix.asset_name) || format('target/{0}.tar.gz', matrix.asset_name) }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
