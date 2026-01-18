@@ -103,6 +103,11 @@ pub async fn collect_resources(
         regions.extend(additional);
     }
 
+    // Validate all regions before starting collection
+    aws::regions::validate_regions(&cli, &regions)
+        .await
+        .context("Region validation failed")?;
+
     // Configuration
     let output_directory = "./output".to_string();
 
